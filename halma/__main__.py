@@ -1,6 +1,9 @@
 # Python Standard Library imports
 import sys
 
+# Custom module imports
+from .board import Board
+
 BOARD_SIZES = ["8", "10", "16"]
 RED_OPTIONS = ["r", "re", "red"]
 GREEN_OPTIONS = ["g", "ge", "green"]
@@ -39,3 +42,6 @@ if __name__ == "__main__":
         print("error: <h-player> should be [" +
               ", ".join(RED_OPTIONS + GREEN_OPTIONS) + "]")
         sys.exit(-1)
+
+    board = Board(b_size, h_player)
+    board.mainloop()
