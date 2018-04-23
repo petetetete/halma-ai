@@ -17,6 +17,10 @@ class Board(tk.Tk):
         # Save tracking variables
         self.b_size = b_size
         self.tiles = {}
+        self.board = [
+            [2 if i + j < 4 else 1 if i + j > 2 * (b_size - 3) else 0 for j in range(b_size)]
+            for i in range(b_size)
+        ]
 
         # Create column/row labels
         label_font = "Helvetica 16"
@@ -52,17 +56,17 @@ class Board(tk.Tk):
             sticky="ewns")
 
         # Bind the drawing function and configure grid sizes
-        self.canvas.bind("<Configure>", self.redraw)
+        self.canvas.bind("<Configure>", self.draw_board)
         self.columnconfigure(0, minsize=48)
         self.rowconfigure(0, minsize=48)
         self.columnconfigure(b_size + 2, minsize=48)
         self.rowconfigure(b_size + 2, minsize=48)
         self.rowconfigure(b_size + 3, minsize=48)
 
-    def redraw(self, event=None):
+    def draw_board(self, event=None):
 
         # Delete old rectangles and save properties
-        self.canvas.delete("rec")
+        self.canvas.delete("tile")
         cell_width = int(self.canvas.winfo_width() / self.b_size)
         cell_height = int(self.canvas.winfo_height() / self.b_size)
         border_size = 5
@@ -71,7 +75,7 @@ class Board(tk.Tk):
         for column in range(self.b_size):
             for row in range(self.b_size):
 
-                color = "#8C6C50" if (row + column) % 2 else "#DBBFA0"
+                color = self.get_tile_color(row, column)
 
                 # Calculate pixel positions
                 x1 = column * cell_width + border_size
@@ -79,19 +83,62 @@ class Board(tk.Tk):
                 x2 = x1 + cell_width - border_size
                 y2 = y1 + cell_height - border_size
 
-                # Create and save tile
-                tile = self.canvas.create_rectangle(x1, y1, x2, y2, tags="rec",
-                    width=border_size, fill=color, outline=color)
+                # Render tile
+                tile = self.canvas.create_rectangle(x1, y1, x2, y2,
+                    tags="tile", width=border_size, fill=color, outline=color)
                 self.tiles[row, column] = tile
                 self.canvas.tag_bind(tile, "<1>", lambda event, row=row,
                     column=column: self.clicked(row, column))
 
+        self.draw_pieces()
+
+    def draw_pieces(self):
+
+        self.canvas.delete("piece")
+        cell_width = int(self.canvas.winfo_width() / self.b_size)
+        cell_height = int(self.canvas.winfo_height() / self.b_size)
+        border_size = 4
+
+        for column in range(self.b_size):
+            for row in range(self.b_size):
+
+                # Calculate pixel positions
+                x1 = column * cell_width + border_size
+                y1 = row * cell_height + border_size
+                x2 = x1 + cell_width - border_size
+                y2 = y1 + cell_height - border_size
+
+                if self.board[row][column] == 2:
+                    piece = self.canvas.create_oval(x1, y1, x2, y2,
+                        tags="piece", width=0, fill="red")
+                elif self.board[row][column] == 1:
+                    piece = self.canvas.create_oval(x1, y1, x2, y2,
+                        tags="piece", width=0, fill="green")
+                else:
+                    continue
+
+                self.canvas.tag_bind(piece, "<1>", lambda event, row=row,
+                    column=column: self.clicked(row, column))
+
     def clicked(self, row, column):
+        color = self.get_tile_color(row, column)
         tile = self.tiles[row, column]
         tile_color = self.canvas.itemcget(tile, "outline")
-        new_color = "blue" if tile_color == "red" else "red"
+        new_color = color if tile_color == "red" else "red"
         self.canvas.itemconfig(tile, outline=new_color)
         self.status.configure(text="You clicked on %s/%s" % (row, column))
+        self.draw_pieces()
+
+    # Helpers #
+
+    def get_tile_color(self, row, column):
+
+        if row + column < 4:
+            return "#ba6262" if (row + column) % 2 else "#ce9d9d"
+        elif row + column > 2 * (self.b_size - 3):
+            return "#71b651" if (row + column) % 2 else "#a6ce9d"
+        else:
+            return "#8C6C50" if (row + column) % 2 else "#DBBFA0"
 
 
 if __name__ == "__main__":
