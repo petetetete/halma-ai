@@ -62,6 +62,14 @@ class Board(tk.Tk):
         self.rowconfigure(self.b_size + 2, minsize=48)
         self.rowconfigure(self.b_size + 3, minsize=48)
 
+    # Public Methods #
+
+    def add_click_handler(self, func):
+        self.click_handler = func
+
+    def set_status(self, text):
+        self.status.configure(text=text)
+
     def draw_tiles(self, event=None, board=None):
 
         if board is not None:
@@ -74,24 +82,24 @@ class Board(tk.Tk):
         border_size = 5
 
         # Recreate each rectangle
-        for column in range(self.b_size):
+        for col in range(self.b_size):
             for row in range(self.b_size):
 
-                color = self._get_tile_color(row, column)
+                tile_color, outline_color = self._get_tile_color(row, col)
 
                 # Calculate pixel positions
-                x1 = column * cell_width + border_size / 2
+                x1 = col * cell_width + border_size / 2
                 y1 = row * cell_height + border_size / 2
-                x2 = (column + 1) * cell_width - border_size / 2
+                x2 = (col + 1) * cell_width - border_size / 2
                 y2 = (row + 1) * cell_height - border_size / 2
 
                 # Render tile
                 tile = self.canvas.create_rectangle(x1, y1, x2, y2,
-                    tags="tile", width=border_size, fill=color[0],
-                    outline=color[1])
-                self.tiles[row, column] = tile
+                    tags="tile", width=border_size, fill=tile_color,
+                    outline=outline_color)
+                self.tiles[row, col] = tile
                 self.canvas.tag_bind(tile, "<1>", lambda event, row=row,
-                    column=column: self.click_handler(row, column))
+                    col=col: self.click_handler(row, col))
 
         self.draw_pieces()
 
@@ -105,39 +113,33 @@ class Board(tk.Tk):
         cell_height = int(self.canvas.winfo_height() / self.b_size)
         border_size = 20
 
-        for column in range(self.b_size):
+        for col in range(self.b_size):
             for row in range(self.b_size):
 
                 # Calculate pixel positions
-                x1 = column * cell_width + border_size / 2
+                x1 = col * cell_width + border_size / 2
                 y1 = row * cell_height + border_size / 2
-                x2 = (column + 1) * cell_width - border_size / 2
+                x2 = (col + 1) * cell_width - border_size / 2
                 y2 = (row + 1) * cell_height - border_size / 2
 
-                if self.board[row][column][1] == 2:
+                if self.board[row][col][1] == 2:
                     piece = self.canvas.create_oval(x1, y1, x2, y2,
                         tags="piece", width=0, fill="red")
-                elif self.board[row][column][1] == 1:
+                elif self.board[row][col][1] == 1:
                     piece = self.canvas.create_oval(x1, y1, x2, y2,
                         tags="piece", width=0, fill="green")
                 else:
                     continue
 
                 self.canvas.tag_bind(piece, "<1>", lambda event, row=row,
-                    column=column: self.click_handler(row, column))
-
-    def add_click_handler(self, func):
-        self.click_handler = func
-
-    def set_status(self, text):
-        self.status.configure(text=text)
+                    col=col: self.click_handler(row, col))
 
     # Private Helpers #
 
-    def _get_tile_color(self, row, column):
+    def _get_tile_color(self, row, col):
 
         # Save the current tile color
-        board_tile = self.board[row][column]
+        board_tile = self.board[row][col]
 
         # Find appropriate tile color
         tile_colors = [
@@ -145,7 +147,7 @@ class Board(tk.Tk):
             ("#71b651", "#a6ce9d"),  # Red goal tiles
             ("#ba6262", "#ce9d9d")   # Green goal tiles
         ]
-        tile_color = tile_colors[board_tile[0]][(row + column) % 2]
+        tile_color = tile_colors[board_tile[0]][(row + col) % 2]
 
         # Find appropriate outline color
         outline_colors = [
@@ -154,4 +156,4 @@ class Board(tk.Tk):
         ]
         outline_color = outline_colors[board_tile[2]]
 
-        return (tile_color, outline_color)
+        return tile_color, outline_color
