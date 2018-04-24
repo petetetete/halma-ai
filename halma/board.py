@@ -152,7 +152,8 @@ class Board(tk.Tk):
         # Find appropriate outline color
         outline_colors = [
             tile_color,
-            "yellow"
+            "yellow",  # TODO: Change
+            "lightblue"
         ]
         outline_color = outline_colors[board_tile[2]]
 

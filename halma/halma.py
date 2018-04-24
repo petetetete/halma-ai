@@ -1,6 +1,8 @@
 # Custom module imports
 from .board import Board
 
+# Move -> [(from_r, from_c), (to_r, to_c)]
+
 
 class Halma():
 
@@ -20,8 +22,6 @@ class Halma():
 
                 board[row][col] = element
 
-        board[6][3] = [0, 1, 0]
-
         # Save member variables
         self.b_size = b_size
         self.h_player = h_player
@@ -33,8 +33,12 @@ class Halma():
         self.board_view.mainloop()
 
     def tile_clicked(self, row, column):
+
+        # TODO: CHange
         self.board_view.set_status("You clicked on %s/%s" % (row, column))
-        self.board[row][column][2] = (self.board[row][column][2] + 1) % 2
+        # self.board[row][column][2] = (self.board[row][column][2] + 1) % 2
+        # self.move_piece((6, 3), (5, 2))
+        self.move_piece((7, 4), (6, 3))
 
         self.board_view.draw_tiles(board=self.board)
 
@@ -96,6 +100,23 @@ class Halma():
                     self.get_moves_at_tile(new_row, new_col, moves, False)
 
         return moves
+
+    def move_piece(self, from_tile, to_tile):
+
+        board_from = self.board[from_tile[0]][from_tile[1]]
+        board_to = self.board[to_tile[0]][to_tile[1]]
+
+        if board_from[1] == 0:
+            self.board_view.set_status("Invalid move")
+            return
+
+        # Move piece
+        board_to[1] = board_from[1]
+        board_from[1] = 0
+
+        # Update outline
+        board_to[2] = 2
+        board_from[2] = 2
 
 
 if __name__ == "__main__":

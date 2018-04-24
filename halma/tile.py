@@ -11,7 +11,7 @@
 # index 2 is the outline type
 #   0 = no outline
 #   1 = selected outline
-#   2 =
+#   2 = just moved
 
 
 class Tile():
