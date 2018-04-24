@@ -20,6 +20,8 @@ class Halma():
 
                 board[row][col] = element
 
+        board[6][3] = [0, 1, 0]
+
         # Save member variables
         self.b_size = b_size
         self.h_player = h_player
@@ -27,8 +29,8 @@ class Halma():
         self.board = board
 
         self.board_view.add_click_handler(self.tile_clicked)
-        self.get_next_moves()
-        # self.board_view.mainloop()
+        print(self.get_next_moves())  # TODO: Remove
+        self.board_view.mainloop()
 
     def tile_clicked(self, row, column):
         self.board_view.set_status("You clicked on %s/%s" % (row, column))
@@ -39,7 +41,6 @@ class Halma():
     def get_next_moves(self, player=1):
 
         moves = []  # All possible moves
-
         for col in range(self.b_size):
             for row in range(self.b_size):
 
@@ -47,30 +48,52 @@ class Halma():
                 if self.board[row][col][1] != player:
                     continue
 
-                moves += self.get_moves_at_tile(row, col, [], [])
+                move = {
+                    "from": (row, col),
+                    "to": self.get_moves_at_tile(row, col, [])
+                }
+                moves += [move]
 
-        print(moves)
         return moves
 
-    def get_moves_at_tile(self, row, col, moves, skip_tiles):
+    def get_moves_at_tile(self, row, col, moves, adjacent=True):
 
         # Find and save immediately adjacent moves
         for col_delta in range(-1, 2):
             for row_delta in range(-1, 2):
 
+                # Check adjacent tiles
+
                 new_row = row + row_delta
                 new_col = col + col_delta
 
                 # Skip checking degenerate values
-                if ((new_row == row and new_col == col) or
+                if ((new_row, new_col) in moves or
+                    (new_row == row and new_col == col) or
                     new_row < 0 or new_col < 0 or
                     new_row >= self.b_size or new_col >= self.b_size):
                     continue
 
                 if self.board[new_row][new_col][1] == 0:
-                    moves += [((row, col), (new_row, new_col))]
+                    if adjacent:  # Don't consider adjacent on subsequent calls
+                        moves += [(new_row, new_col)]
+                    continue
 
-                skip_tiles += [(row, col)]
+                # Check jump tiles
+
+                new_row = new_row + row_delta
+                new_col = new_col + col_delta
+
+                # Skip checking degenerate values
+                if ((new_row, new_col) in moves or
+                    (new_row == row and new_col == col) or
+                    new_row < 0 or new_col < 0 or
+                    new_row >= self.b_size or new_col >= self.b_size):
+                    continue
+
+                if self.board[new_row][new_col][1] == 0:
+                    moves += [(new_row, new_col)]
+                    self.get_moves_at_tile(new_row, new_col, moves, False)
 
         return moves
 
