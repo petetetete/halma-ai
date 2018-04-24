@@ -2,7 +2,7 @@
 import sys
 
 # Custom module imports
-from .board import Board
+from .halma import Halma
 
 BOARD_SIZES = ["8", "10", "16"]
 RED_OPTIONS = ["r", "re", "red"]
@@ -43,5 +43,4 @@ if __name__ == "__main__":
               ", ".join(RED_OPTIONS + GREEN_OPTIONS) + "]")
         sys.exit(-1)
 
-    board = Board(b_size, h_player)
-    board.mainloop()
+    halma = Halma(b_size, h_player)
