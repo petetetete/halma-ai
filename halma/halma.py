@@ -1,5 +1,6 @@
 # Custom module imports
 from .board import Board
+from .tile import Tile
 
 # Move -> [(from_r, from_c), (to_r, to_c)]
 
@@ -9,16 +10,16 @@ class Halma():
     def __init__(self, b_size=8, h_player="g"):
 
         # Create initial board
-        board = [[0] * b_size for _ in range(b_size)]
+        board = [[None] * b_size for _ in range(b_size)]
         for row in range(b_size):
             for col in range(b_size):
 
                 if row + col < 4:
-                    element = [2, 2, 0]
+                    element = Tile(2, 2, 0, row, col)
                 elif row + col > 2 * (b_size - 3):
-                    element = [1, 1, 0]
+                    element = Tile(1, 1, 0, row, col)
                 else:
-                    element = [0, 0, 0]
+                    element = Tile(0, 0, 0, row, col)
 
                 board[row][col] = element
 
@@ -49,7 +50,7 @@ class Halma():
             for row in range(self.b_size):
 
                 # Skip board elements that are not the current player
-                if self.board[row][col][1] != player:
+                if self.board[row][col].piece != player:
                     continue
 
                 move = {
@@ -78,7 +79,7 @@ class Halma():
                     new_row >= self.b_size or new_col >= self.b_size):
                     continue
 
-                if self.board[new_row][new_col][1] == 0:
+                if self.board[new_row][new_col].piece == Tile.P_NONE:
                     if adjacent:  # Don't consider adjacent on subsequent calls
                         moves += [(new_row, new_col)]
                     continue
@@ -95,7 +96,7 @@ class Halma():
                     new_row >= self.b_size or new_col >= self.b_size):
                     continue
 
-                if self.board[new_row][new_col][1] == 0:
+                if self.board[new_row][new_col].piece == Tile.P_NONE:
                     moves += [(new_row, new_col)]
                     self.get_moves_at_tile(new_row, new_col, moves, False)
 
@@ -106,17 +107,18 @@ class Halma():
         board_from = self.board[from_tile[0]][from_tile[1]]
         board_to = self.board[to_tile[0]][to_tile[1]]
 
-        if board_from[1] == 0:
+        # Handle trying to move a non-existant piece and moving into a piece
+        if board_from.piece == Tile.P_NONE or board_to.piece != Tile.P_NONE:
             self.board_view.set_status("Invalid move")
             return
 
         # Move piece
-        board_to[1] = board_from[1]
-        board_from[1] = 0
+        board_to.piece = board_from.piece
+        board_from.piece = Tile.P_NONE
 
         # Update outline
-        board_to[2] = 2
-        board_from[2] = 2
+        board_to.outline = Tile.O_MOVED
+        board_from.outline = Tile.O_MOVED
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 # Python Standard Library imports
 import tkinter as tk
 
+# Custom module imports
+from .tile import Tile
+
 
 class Board(tk.Tk):
 
@@ -85,7 +88,8 @@ class Board(tk.Tk):
         for col in range(self.b_size):
             for row in range(self.b_size):
 
-                tile_color, outline_color = self._get_tile_color(row, col)
+                board_tile = self.board[row][col]
+                tile_color, outline_color = board_tile.get_tile_colors()
 
                 # Calculate pixel positions
                 x1 = col * cell_width + border_size / 2
@@ -122,10 +126,10 @@ class Board(tk.Tk):
                 x2 = (col + 1) * cell_width - border_size / 2
                 y2 = (row + 1) * cell_height - border_size / 2
 
-                if self.board[row][col][1] == 2:
+                if self.board[row][col].piece == 2:
                     piece = self.canvas.create_oval(x1, y1, x2, y2,
                         tags="piece", width=0, fill="red")
-                elif self.board[row][col][1] == 1:
+                elif self.board[row][col].piece == 1:
                     piece = self.canvas.create_oval(x1, y1, x2, y2,
                         tags="piece", width=0, fill="green")
                 else:
@@ -133,28 +137,3 @@ class Board(tk.Tk):
 
                 self.canvas.tag_bind(piece, "<1>", lambda event, row=row,
                     col=col: self.click_handler(row, col))
-
-    # Private Helpers #
-
-    def _get_tile_color(self, row, col):
-
-        # Save the current tile color
-        board_tile = self.board[row][col]
-
-        # Find appropriate tile color
-        tile_colors = [
-            ("#8C6C50", "#DBBFA0"),  # Normal tiles
-            ("#71b651", "#a6ce9d"),  # Red goal tiles
-            ("#ba6262", "#ce9d9d")   # Green goal tiles
-        ]
-        tile_color = tile_colors[board_tile[0]][(row + col) % 2]
-
-        # Find appropriate outline color
-        outline_colors = [
-            tile_color,
-            "yellow",  # TODO: Change
-            "lightblue"
-        ]
-        outline_color = outline_colors[board_tile[2]]
-
-        return tile_color, outline_color
