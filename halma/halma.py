@@ -31,6 +31,7 @@ class Halma():
 
         self.board_view.add_click_handler(self.tile_clicked)
         print(self.get_next_moves())  # TODO: Remove
+        print(self.find_winner())
         self.board_view.mainloop()
 
     def tile_clicked(self, row, column):
@@ -119,6 +120,27 @@ class Halma():
         # Update outline
         board_to.outline = Tile.O_MOVED
         board_from.outline = Tile.O_MOVED
+
+    def find_winner(self):
+
+        g_win = True
+        r_win = True
+
+        for col in range(self.b_size):
+            for row in range(self.b_size):
+
+                if (self.board[row][col].tile == Tile.T_RED and
+                    self.board[row][col].piece != Tile.P_GREEN):
+                    g_win = False
+
+                if (self.board[row][col].tile == Tile.T_GREEN and
+                    self.board[row][col].piece != Tile.P_RED):
+                    r_win = False
+
+                if g_win is False and r_win is False:
+                    break
+
+        return Tile.P_GREEN if g_win else Tile.P_RED if r_win else None
 
 
 if __name__ == "__main__":
