@@ -21,8 +21,6 @@ class Halma():
 
                 board[row][col] = element
 
-        board[4][4] = Tile(1, 1, 0, 4, 4)
-
         # Save member variables
         self.b_size = b_size
         self.h_player = h_player  # TODO
@@ -33,8 +31,6 @@ class Halma():
         self.valid_moves = []
 
         self.board_view.add_click_handler(self.tile_clicked)
-        # print(self.get_moves_at_tile(self.board[7][7]))  # TODO: Remove
-        # print(self.find_winner())
         self.board_view.mainloop()
 
     def tile_clicked(self, row, col):
