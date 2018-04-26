@@ -71,6 +71,9 @@ class Halma():
                     if winner == Tile.P_GREEN else "red") + " player has won!")
                 self.current_player = None
 
+        else:
+            self.board_view.set_status("Invalid move attempted")
+
         self.board_view.draw_tiles(board=self.board)  # Refresh the board UI
 
     def get_next_moves(self, player=1):
