@@ -44,7 +44,8 @@ class Halma():
 
             # Outline the new and valid move tiles
             new_tile.outline = Tile.O_SELECT
-            self.valid_moves = self.get_moves_at_tile(new_tile)
+            self.valid_moves = self.get_moves_at_tile(new_tile,
+                self.current_player)
             self.outline_tiles([new_tile] + self.valid_moves)
 
             # Update status and save the new tile
@@ -90,19 +91,26 @@ class Halma():
 
                 move = {
                     "from": (row, col),
-                    "to": self.get_moves_at_tile(curr_tile)
+                    "to": self.get_moves_at_tile(curr_tile, player)
                 }
                 moves += [move]
 
         return moves
 
-    def get_moves_at_tile(self, tile, moves=None, adjacent=True):
+    def get_moves_at_tile(self, tile, player, moves=None, adjacent=True):
 
         if moves is None:
             moves = []
 
         row = tile.loc[0]
         col = tile.loc[1]
+
+        # List of valid tile types to move to
+        valid_tiles = [Tile.T_NONE, Tile.T_GREEN, Tile.T_RED]
+        if tile.tile != player:  # Moving back into your own goal
+            valid_tiles.remove(player)
+        if tile.tile != Tile.T_NONE and tile.tile != player:
+            valid_tiles.remove(Tile.T_NONE)  # Moving out of the enemy's goal
 
         # Find and save immediately adjacent moves
         for col_delta in range(-1, 2):
@@ -119,8 +127,9 @@ class Halma():
                     new_row >= self.b_size or new_col >= self.b_size):
                     continue
 
+                # Handle moves out of/in to goals
                 new_tile = self.board[new_row][new_col]
-                if new_tile in moves:
+                if new_tile.tile not in valid_tiles:
                     continue
 
                 if new_tile.piece == Tile.P_NONE:
@@ -140,13 +149,14 @@ class Halma():
                     new_row >= self.b_size or new_col >= self.b_size):
                     continue
 
+                # Handle returning moves and moves out of/in to goals
                 new_tile = self.board[new_row][new_col]
-                if new_tile in moves:
+                if new_tile in moves or (new_tile.tile not in valid_tiles):
                     continue
 
                 if new_tile.piece == Tile.P_NONE:
                     moves += [new_tile]
-                    self.get_moves_at_tile(new_tile, moves, False)
+                    self.get_moves_at_tile(new_tile, player, moves, False)
 
         return moves
 
