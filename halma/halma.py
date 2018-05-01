@@ -52,7 +52,7 @@ class Halma():
             self.board_view.set_status("Tile `" + str(new_tile) + "` selected")
             self.selected_tile = new_tile
 
-        # If we already had a piece selected and
+        # If we already had a piece selected and we are moving a piece
         elif self.selected_tile and new_tile in self.valid_moves:
 
             self.outline_tiles(None)  # Reset outlines
@@ -76,6 +76,8 @@ class Halma():
             self.board_view.set_status("Invalid move attempted")
 
         self.board_view.draw_tiles(board=self.board)  # Refresh the board UI
+
+        print(self.utility_distance(Tile.P_RED))
 
     def get_next_moves(self, player=1):
 
@@ -204,6 +206,31 @@ class Halma():
 
         for tile in tiles:
             tile.outline = outline_type
+
+    def utility_distance(self, player):
+
+        def point_distance(p0, p1):
+            return abs(p0[0] - p1[0]) + abs(p0[1] - p1[1])
+
+        value = 0
+        g_goal = (0, 0)
+        r_goal = (self.b_size - 1, self.b_size - 1)
+
+        for col in range(self.b_size):
+            for row in range(self.b_size):
+
+                tile = self.board[row][col]
+
+                if tile.piece == Tile.P_GREEN:
+                    value -= point_distance(tile.loc, g_goal)
+
+                elif tile.piece == Tile.P_RED:
+                    value += point_distance(tile.loc, r_goal)
+
+        if player == Tile.P_RED:
+            value *= -1
+
+        return value
 
 
 if __name__ == "__main__":
