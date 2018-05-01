@@ -13,12 +13,13 @@ GREEN_OPTIONS = ["g", "ge", "green"]
 if __name__ == "__main__":
 
     # Catch missing parameters
-    if len(sys.argv) < 4:
-        print("usage: halma <b-size> <t-limit> <h-player>")
+    if len(sys.argv) < 3:
+        print("usage: halma <b-size> <t-limit> [<h-player>]")
         sys.exit(-1)
 
     # Unpack params into variables
-    b_size, t_limit, h_player = sys.argv[1:5]
+    b_size, t_limit = sys.argv[1:3]
+    h_player = sys.argv[3] if len(sys.argv) == 4 else None
 
     # Validate b_size and t_limit
     if b_size not in BOARD_SIZES:
@@ -33,15 +34,19 @@ if __name__ == "__main__":
     t_limit = int(t_limit)
 
     # Validate h_player
-    h_player = h_player.lower()
+    if h_player is None:
+        c_player = None
 
-    if h_player in RED_OPTIONS:
-        c_player = Tile.P_GREEN
-    elif h_player in GREEN_OPTIONS:
-        c_player = Tile.P_RED
     else:
-        print("error: <h-player> should be [" +
-              ", ".join(RED_OPTIONS + GREEN_OPTIONS) + "]")
-        sys.exit(-1)
+        h_player = h_player.lower()
+
+        if h_player in RED_OPTIONS:
+            c_player = Tile.P_GREEN
+        elif h_player in GREEN_OPTIONS:
+            c_player = Tile.P_RED
+        else:
+            print("error: <h-player> should be [" +
+                  ", ".join(RED_OPTIONS + GREEN_OPTIONS) + "]")
+            sys.exit(-1)
 
     halma = Halma(b_size, c_player)

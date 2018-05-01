@@ -1,5 +1,6 @@
 # Python Standard Library imports
 import copy
+import time
 
 # Custom module imports
 from .board import Board
@@ -32,6 +33,7 @@ class Halma():
         self.current_player = Tile.P_GREEN
         self.selected_tile = None
         self.valid_moves = []
+        self.computing = False
 
         if self.c_player == self.current_player:
             self.execute_computer_move()
@@ -42,6 +44,9 @@ class Halma():
         self.board_view.mainloop()
 
     def tile_clicked(self, row, col):
+
+        if self.computing:
+            return
 
         new_tile = self.board[row][col]
 
@@ -82,12 +87,13 @@ class Halma():
                     if winner == Tile.P_GREEN else "red") + " player has won!")
                 self.current_player = None
 
-            else:
+            elif self.c_player is not None:
                 self.execute_computer_move()
 
         else:
             self.board_view.set_status("Invalid move attempted")
 
+    # TODO: Something about this is really wack
     def minimax(self, board, depth, player_to_max, maxing=True):
 
         if depth == 0:
@@ -122,7 +128,12 @@ class Halma():
 
     def execute_computer_move(self):
 
+        self.computing = True
+        start = time.time()
         _, move = self.minimax(self.board, 3, self.c_player)
+        end = time.time()
+
+        print("Time to compute:", round(end - start, 2))
 
         move_from = self.board[move[0][0]][move[0][1]]
         move_to = self.board[move[1][0]][move[1][1]]
@@ -132,9 +143,10 @@ class Halma():
 
         self.board_view.draw_tiles(board=self.board)  # Refresh the board
 
-
         self.current_player = (Tile.P_RED
             if self.current_player == Tile.P_GREEN else Tile.P_GREEN)
+
+        self.computing = False
 
     def get_next_moves(self, board, player=1):
 
