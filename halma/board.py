@@ -137,3 +137,5 @@ class Board(tk.Tk):
 
                 self.canvas.tag_bind(piece, "<1>", lambda event, row=row,
                     col=col: self.click_handler(row, col))
+
+        self.update()

@@ -3,6 +3,7 @@ import sys
 
 # Custom module imports
 from .halma import Halma
+from .tile import Tile
 
 BOARD_SIZES = ["8", "10", "16"]
 RED_OPTIONS = ["r", "re", "red"]
@@ -35,12 +36,12 @@ if __name__ == "__main__":
     h_player = h_player.lower()
 
     if h_player in RED_OPTIONS:
-        h_player = "r"
+        c_player = Tile.P_GREEN
     elif h_player in GREEN_OPTIONS:
-        h_player = "g"
+        c_player = Tile.P_RED
     else:
         print("error: <h-player> should be [" +
               ", ".join(RED_OPTIONS + GREEN_OPTIONS) + "]")
         sys.exit(-1)
 
-    halma = Halma(b_size, h_player)
+    halma = Halma(b_size, c_player)

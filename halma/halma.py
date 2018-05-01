@@ -1,3 +1,6 @@
+# Python Standard Library imports
+import copy
+
 # Custom module imports
 from .board import Board
 from .tile import Tile
@@ -5,7 +8,7 @@ from .tile import Tile
 
 class Halma():
 
-    def __init__(self, b_size=8, h_player="g"):
+    def __init__(self, b_size=8, c_player=Tile.P_RED):
 
         # Create initial board
         board = [[None] * b_size for _ in range(b_size)]
@@ -23,14 +26,19 @@ class Halma():
 
         # Save member variables
         self.b_size = b_size
-        self.h_player = h_player  # TODO
+        self.c_player = c_player
         self.board_view = Board(board)
         self.board = board
         self.current_player = Tile.P_GREEN
         self.selected_tile = None
         self.valid_moves = []
 
+        if self.c_player == self.current_player:
+            self.execute_computer_move()
+
         self.board_view.add_click_handler(self.tile_clicked)
+        self.board_view.draw_tiles(board=self.board)  # Refresh the board
+
         self.board_view.mainloop()
 
     def tile_clicked(self, row, col):
@@ -45,12 +53,14 @@ class Halma():
             # Outline the new and valid move tiles
             new_tile.outline = Tile.O_SELECT
             self.valid_moves = self.get_moves_at_tile(new_tile,
-                self.current_player)
+                self.board, self.current_player)
             self.outline_tiles([new_tile] + self.valid_moves)
 
             # Update status and save the new tile
             self.board_view.set_status("Tile `" + str(new_tile) + "` selected")
             self.selected_tile = new_tile
+
+            self.board_view.draw_tiles(board=self.board)  # Refresh the board
 
         # If we already had a piece selected and we are moving a piece
         elif self.selected_tile and new_tile in self.valid_moves:
@@ -59,12 +69,12 @@ class Halma():
             self.move_piece(self.selected_tile, new_tile)  # Move the piece
 
             # Update status and reset tracking variables
-            self.board_view.set_status("Piece moved to `" +
-                str(new_tile) + "`")
             self.selected_tile = None
             self.valid_moves = []
             self.current_player = (Tile.P_RED
                 if self.current_player == Tile.P_GREEN else Tile.P_GREEN)
+
+            self.board_view.draw_tiles(board=self.board)  # Refresh the board
 
             winner = self.find_winner()
             if winner:
@@ -72,34 +82,81 @@ class Halma():
                     if winner == Tile.P_GREEN else "red") + " player has won!")
                 self.current_player = None
 
+            else:
+                self.execute_computer_move()
+
         else:
             self.board_view.set_status("Invalid move attempted")
 
-        self.board_view.draw_tiles(board=self.board)  # Refresh the board UI
+    def minimax(self, board, depth, player_to_max, maxing=True):
 
-        print(self.utility_distance(Tile.P_RED))
+        if depth == 0:
+            return self.utility_distance(board, player_to_max), None
 
-    def get_next_moves(self, player=1):
+        new_board = copy.deepcopy(board)
+        best_move = None
+
+        if maxing:
+            best_val = float("-inf")
+            moves = self.get_next_moves(new_board, player_to_max)
+        else:
+            best_val = float("inf")
+            moves = self.get_next_moves(new_board, (Tile.P_RED
+                    if player_to_max == Tile.P_GREEN else Tile.P_GREEN))
+
+        for move in moves:
+            for to in move["to"]:
+                piece = move["from"].piece
+                move["from"].piece = Tile.P_NONE
+                to.piece = piece
+
+                val, _ = self.minimax(new_board, depth - 1,
+                    player_to_max, not maxing)
+
+                if ((maxing and val > best_val) or
+                    (not maxing and val < best_val)):
+                    best_val = val
+                    best_move = (move["from"].loc, to.loc)
+
+        return best_val, best_move
+
+    def execute_computer_move(self):
+
+        _, move = self.minimax(self.board, 3, self.c_player)
+
+        move_from = self.board[move[0][0]][move[0][1]]
+        move_to = self.board[move[1][0]][move[1][1]]
+
+        self.outline_tiles(None)  # Reset outlines
+        self.move_piece(move_from, move_to)
+
+        self.board_view.draw_tiles(board=self.board)  # Refresh the board
+
+
+        self.current_player = (Tile.P_RED
+            if self.current_player == Tile.P_GREEN else Tile.P_GREEN)
+
+    def get_next_moves(self, board, player=1):
 
         moves = []  # All possible moves
         for col in range(self.b_size):
             for row in range(self.b_size):
 
-                curr_tile = self.board[row][col]
+                curr_tile = board[row][col]
 
                 # Skip board elements that are not the current player
                 if curr_tile.piece != player:
                     continue
 
                 move = {
-                    "from": (row, col),
-                    "to": self.get_moves_at_tile(curr_tile, player)
+                    "from": curr_tile,
+                    "to": self.get_moves_at_tile(curr_tile, board, player)
                 }
                 moves += [move]
 
         return moves
 
-    def get_moves_at_tile(self, tile, player, moves=None, adjacent=True):
+    def get_moves_at_tile(self, tile, board, player, moves=None, adj=True):
 
         if moves is None:
             moves = []
@@ -130,12 +187,12 @@ class Halma():
                     continue
 
                 # Handle moves out of/in to goals
-                new_tile = self.board[new_row][new_col]
+                new_tile = board[new_row][new_col]
                 if new_tile.tile not in valid_tiles:
                     continue
 
                 if new_tile.piece == Tile.P_NONE:
-                    if adjacent:  # Don't consider adjacent on subsequent calls
+                    if adj:  # Don't consider adjacent on subsequent calls
                         moves += [new_tile]
                     continue
 
@@ -152,13 +209,14 @@ class Halma():
                     continue
 
                 # Handle returning moves and moves out of/in to goals
-                new_tile = self.board[new_row][new_col]
+                new_tile = board[new_row][new_col]
                 if new_tile in moves or (new_tile.tile not in valid_tiles):
                     continue
 
                 if new_tile.piece == Tile.P_NONE:
                     moves += [new_tile]
-                    self.get_moves_at_tile(new_tile, player, moves, False)
+                    self.get_moves_at_tile(new_tile, board, player,
+                        moves, False)
 
         return moves
 
@@ -176,6 +234,8 @@ class Halma():
         # Update outline
         to_tile.outline = Tile.O_MOVED
         from_tile.outline = Tile.O_MOVED
+
+        self.board_view.set_status("Piece moved to `" + str(to_tile) + "`")
 
     def find_winner(self):
 
@@ -207,7 +267,7 @@ class Halma():
         for tile in tiles:
             tile.outline = outline_type
 
-    def utility_distance(self, player):
+    def utility_distance(self, board, player):
 
         def point_distance(p0, p1):
             return abs(p0[0] - p1[0]) + abs(p0[1] - p1[1])
@@ -219,7 +279,7 @@ class Halma():
         for col in range(self.b_size):
             for row in range(self.b_size):
 
-                tile = self.board[row][col]
+                tile = board[row][col]
 
                 if tile.piece == Tile.P_GREEN:
                     value -= point_distance(tile.loc, g_goal)
