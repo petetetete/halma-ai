@@ -1,6 +1,7 @@
 # Python Standard Library imports
 import copy
 import time
+import math
 
 # Custom module imports
 from .board import Board
@@ -93,31 +94,35 @@ class Halma():
         else:
             self.board_view.set_status("Invalid move attempted")
 
-    # TODO: Something about this is really wack
     def minimax(self, board, depth, player_to_max, maxing=True):
 
         if depth == 0:
             return self.utility_distance(board, player_to_max), None
 
-        new_board = copy.deepcopy(board)
         best_move = None
 
         if maxing:
             best_val = float("-inf")
-            moves = self.get_next_moves(new_board, player_to_max)
+            moves = self.get_next_moves(board, player_to_max)
         else:
             best_val = float("inf")
-            moves = self.get_next_moves(new_board, (Tile.P_RED
+            moves = self.get_next_moves(board, (Tile.P_RED
                     if player_to_max == Tile.P_GREEN else Tile.P_GREEN))
 
         for move in moves:
             for to in move["to"]:
+
+                # Move piece to the move outlined
                 piece = move["from"].piece
                 move["from"].piece = Tile.P_NONE
                 to.piece = piece
 
-                val, _ = self.minimax(new_board, depth - 1,
+                val, _ = self.minimax(board, depth - 1,
                     player_to_max, not maxing)
+
+                # Move the piece pack
+                to.piece = Tile.P_NONE
+                move["from"].piece = piece
 
                 if ((maxing and val > best_val) or
                     (not maxing and val < best_val)):
@@ -129,6 +134,9 @@ class Halma():
     def execute_computer_move(self):
 
         self.computing = True
+        self.board_view.set_status("Computing next move...")
+        self.board_view.update()
+
         start = time.time()
         _, move = self.minimax(self.board, 3, self.c_player)
         end = time.time()
@@ -247,7 +255,8 @@ class Halma():
         to_tile.outline = Tile.O_MOVED
         from_tile.outline = Tile.O_MOVED
 
-        self.board_view.set_status("Piece moved to `" + str(to_tile) + "`")
+        self.board_view.set_status("Piece moved from `" + str(from_tile) +
+            "` to `" + str(to_tile) + "`")
 
     def find_winner(self):
 
@@ -282,7 +291,7 @@ class Halma():
     def utility_distance(self, board, player):
 
         def point_distance(p0, p1):
-            return abs(p0[0] - p1[0]) + abs(p0[1] - p1[1])
+            return math.sqrt((p1[0] - p0[0])**2 + (p1[1] - p0[1])**2)
 
         value = 0
         g_goal = (0, 0)

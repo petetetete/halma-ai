@@ -36,6 +36,8 @@ class Tile():
         self.piece = piece
         self.outline = outline
 
+        self.row = row
+        self.col = col
         self.loc = (row, col)
 
     def get_tile_colors(self):
