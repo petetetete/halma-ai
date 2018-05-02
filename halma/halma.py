@@ -1,5 +1,5 @@
 # Python Standard Library imports
-import copy
+import sys
 import time
 import math
 
@@ -36,17 +36,28 @@ class Halma():
         self.valid_moves = []
         self.computing = False
 
+        self.ply_depth = 3
+        self.ab_enabled = True
+
         if self.c_player == self.current_player:
             self.execute_computer_move()
 
         self.board_view.add_click_handler(self.tile_clicked)
         self.board_view.draw_tiles(board=self.board)  # Refresh the board
 
-        self.board_view.mainloop()
+        # Print initial program info
+        print("Halma Solver Basic Information")
+        print("==============================")
+        print("Computer enabled:", "no" if self.c_player is None else "yes")
+        print("Ply depth:", self.ply_depth)
+        print("A-B pruning enabled:", "yes" if self.ab_enabled else "no")
+        print()
+
+        self.board_view.mainloop()  # Begin tkinter main loop
 
     def tile_clicked(self, row, col):
 
-        if self.computing:
+        if self.computing:  # Block clicks while computing
             return
 
         new_tile = self.board[row][col]
@@ -82,6 +93,7 @@ class Halma():
 
             self.board_view.draw_tiles(board=self.board)  # Refresh the board
 
+            # If there is a winner to the game
             winner = self.find_winner()
             if winner:
                 self.board_view.set_status("The " + ("green"
@@ -94,13 +106,15 @@ class Halma():
         else:
             self.board_view.set_status("Invalid move attempted")
 
-    def minimax(self, board, depth, player_to_max, maxing=True):
+    def minimax(self, board, depth, player_to_max, a=float("-inf"),
+                b=float("inf"), maxing=True):
 
+        # Bottomed out base case
         if depth == 0:
             return self.utility_distance(board, player_to_max), None
 
+        # Setup initial variables and find moves
         best_move = None
-
         if maxing:
             best_val = float("-inf")
             moves = self.get_next_moves(board, player_to_max)
@@ -109,6 +123,7 @@ class Halma():
             moves = self.get_next_moves(board, (Tile.P_RED
                     if player_to_max == Tile.P_GREEN else Tile.P_GREEN))
 
+        # For each move
         for move in moves:
             for to in move["to"]:
 
@@ -118,43 +133,62 @@ class Halma():
                 to.piece = piece
 
                 val, _ = self.minimax(board, depth - 1,
-                    player_to_max, not maxing)
+                    player_to_max, a, b, not maxing)
 
                 # Move the piece pack
                 to.piece = Tile.P_NONE
                 move["from"].piece = piece
 
-                if ((maxing and val > best_val) or
-                    (not maxing and val < best_val)):
+                if maxing and val > best_val:
                     best_val = val
                     best_move = (move["from"].loc, to.loc)
+                    a = max(a, val)
+
+                if not maxing and val < best_val:
+                    best_val = val
+                    best_move = (move["from"].loc, to.loc)
+                    b = min(b, val)
+
+                if self.ab_enabled and b <= a:
+                    return best_val, best_move
 
         return best_val, best_move
 
     def execute_computer_move(self):
 
+        # Print out search information
+        print("Turn Computation")
+        print("================")
+        print("Executing search...", end=" ")
+        sys.stdout.flush()
+
         self.computing = True
         self.board_view.set_status("Computing next move...")
         self.board_view.update()
 
+        # Execute minimax search
         start = time.time()
-        _, move = self.minimax(self.board, 3, self.c_player)
+        _, move = self.minimax(self.board, self.ply_depth, self.c_player)
         end = time.time()
 
+        # Print search result stats
+        print("complete")
         print("Time to compute:", round(end - start, 2))
 
+        # Move the resulting piece
+        self.outline_tiles(None)  # Reset outlines
         move_from = self.board[move[0][0]][move[0][1]]
         move_to = self.board[move[1][0]][move[1][1]]
-
-        self.outline_tiles(None)  # Reset outlines
         self.move_piece(move_from, move_to)
 
         self.board_view.draw_tiles(board=self.board)  # Refresh the board
 
+        # Toggle the current player
+        self.computing = False
         self.current_player = (Tile.P_RED
             if self.current_player == Tile.P_GREEN else Tile.P_GREEN)
 
-        self.computing = False
+        print()
 
     def get_next_moves(self, board, player=1):
 
