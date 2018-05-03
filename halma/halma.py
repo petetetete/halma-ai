@@ -39,6 +39,11 @@ class Halma():
         self.ply_depth = 3
         self.ab_enabled = True
 
+        self.r_goals = [t for row in board
+                        for t in row if t.tile == Tile.T_RED]
+        self.g_goals = [t for row in board
+                        for t in row if t.tile == Tile.T_GREEN]
+
         if self.c_player == self.current_player:
             self.execute_computer_move()
 
@@ -110,7 +115,7 @@ class Halma():
                 b=float("inf"), maxing=True):
 
         # Bottomed out base case
-        if depth == 0:
+        if depth == 0 or self.find_winner():
             return self.utility_distance(board, player_to_max), None
 
         # Setup initial variables and find moves
@@ -135,7 +140,7 @@ class Halma():
                 val, _ = self.minimax(board, depth - 1,
                     player_to_max, a, b, not maxing)
 
-                # Move the piece pack
+                # Move the piece back
                 to.piece = Tile.P_NONE
                 move["from"].piece = piece
 
@@ -183,11 +188,17 @@ class Halma():
 
         self.board_view.draw_tiles(board=self.board)  # Refresh the board
 
-        # Toggle the current player
-        self.computing = False
-        self.current_player = (Tile.P_RED
-            if self.current_player == Tile.P_GREEN else Tile.P_GREEN)
+        winner = self.find_winner()
+        if winner:
+            self.board_view.set_status("The " + ("green"
+                if winner == Tile.P_GREEN else "red") + " player has won!")
+            self.current_player = None
 
+        else:  # Toggle the current player
+            self.current_player = (Tile.P_RED
+                if self.current_player == Tile.P_GREEN else Tile.P_GREEN)
+
+        self.computing = False
         print()
 
     def get_next_moves(self, board, player=1):
@@ -328,8 +339,6 @@ class Halma():
             return math.sqrt((p1[0] - p0[0])**2 + (p1[1] - p0[1])**2)
 
         value = 0
-        g_goal = (0, 0)
-        r_goal = (self.b_size - 1, self.b_size - 1)
 
         for col in range(self.b_size):
             for row in range(self.b_size):
@@ -337,10 +346,14 @@ class Halma():
                 tile = board[row][col]
 
                 if tile.piece == Tile.P_GREEN:
-                    value -= point_distance(tile.loc, g_goal)
+                    distances = [point_distance(tile.loc, g.loc) for g in
+                                 self.r_goals if g.piece != Tile.P_GREEN]
+                    value -= max(distances) if len(distances) else -50
 
                 elif tile.piece == Tile.P_RED:
-                    value += point_distance(tile.loc, r_goal)
+                    distances = [point_distance(tile.loc, g.loc) for g in
+                                 self.g_goals if g.piece != Tile.P_RED]
+                    value += max(distances) if len(distances) else -50
 
         if player == Tile.P_RED:
             value *= -1
