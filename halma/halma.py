@@ -75,7 +75,7 @@ class Halma():
             # Outline the new and valid move tiles
             new_tile.outline = Tile.O_SELECT
             self.valid_moves = self.get_moves_at_tile(new_tile,
-                self.board, self.current_player)
+                self.current_player)
             self.outline_tiles([new_tile] + self.valid_moves)
 
             # Update status and save the new tile
@@ -111,21 +111,21 @@ class Halma():
         else:
             self.board_view.set_status("Invalid move attempted")
 
-    def minimax(self, board, depth, player_to_max, a=float("-inf"),
+    def minimax(self, depth, player_to_max, a=float("-inf"),
                 b=float("inf"), maxing=True):
 
         # Bottomed out base case
         if depth == 0 or self.find_winner():
-            return self.utility_distance(board, player_to_max), None
+            return self.utility_distance(player_to_max), None
 
         # Setup initial variables and find moves
         best_move = None
         if maxing:
             best_val = float("-inf")
-            moves = self.get_next_moves(board, player_to_max)
+            moves = self.get_next_moves(player_to_max)
         else:
             best_val = float("inf")
-            moves = self.get_next_moves(board, (Tile.P_RED
+            moves = self.get_next_moves((Tile.P_RED
                     if player_to_max == Tile.P_GREEN else Tile.P_GREEN))
 
         # For each move
@@ -137,8 +137,8 @@ class Halma():
                 move["from"].piece = Tile.P_NONE
                 to.piece = piece
 
-                val, _ = self.minimax(board, depth - 1,
-                    player_to_max, a, b, not maxing)
+                val, _ = self.minimax(depth - 1, player_to_max,
+                    a, b, not maxing)
 
                 # Move the piece back
                 to.piece = Tile.P_NONE
@@ -173,7 +173,7 @@ class Halma():
 
         # Execute minimax search
         start = time.time()
-        _, move = self.minimax(self.board, self.ply_depth, self.c_player)
+        _, move = self.minimax(self.ply_depth, self.c_player)
         end = time.time()
 
         # Print search result stats
@@ -201,13 +201,13 @@ class Halma():
         self.computing = False
         print()
 
-    def get_next_moves(self, board, player=1):
+    def get_next_moves(self, player=1):
 
         moves = []  # All possible moves
         for col in range(self.b_size):
             for row in range(self.b_size):
 
-                curr_tile = board[row][col]
+                curr_tile = self.board[row][col]
 
                 # Skip board elements that are not the current player
                 if curr_tile.piece != player:
@@ -215,13 +215,13 @@ class Halma():
 
                 move = {
                     "from": curr_tile,
-                    "to": self.get_moves_at_tile(curr_tile, board, player)
+                    "to": self.get_moves_at_tile(curr_tile, player)
                 }
                 moves += [move]
 
         return moves
 
-    def get_moves_at_tile(self, tile, board, player, moves=None, adj=True):
+    def get_moves_at_tile(self, tile, player, moves=None, adj=True):
 
         if moves is None:
             moves = []
@@ -252,7 +252,7 @@ class Halma():
                     continue
 
                 # Handle moves out of/in to goals
-                new_tile = board[new_row][new_col]
+                new_tile = self.board[new_row][new_col]
                 if new_tile.tile not in valid_tiles:
                     continue
 
@@ -267,21 +267,18 @@ class Halma():
                 new_col = new_col + col_delta
 
                 # Skip checking degenerate values
-                if ((new_row, new_col) in moves or
-                    (new_row == row and new_col == col) or
-                    new_row < 0 or new_col < 0 or
+                if (new_row < 0 or new_col < 0 or
                     new_row >= self.b_size or new_col >= self.b_size):
                     continue
 
                 # Handle returning moves and moves out of/in to goals
-                new_tile = board[new_row][new_col]
+                new_tile = self.board[new_row][new_col]
                 if new_tile in moves or (new_tile.tile not in valid_tiles):
                     continue
 
                 if new_tile.piece == Tile.P_NONE:
                     moves += [new_tile]
-                    self.get_moves_at_tile(new_tile, board, player,
-                        moves, False)
+                    self.get_moves_at_tile(new_tile, player, moves, False)
 
         return moves
 
@@ -305,24 +302,12 @@ class Halma():
 
     def find_winner(self):
 
-        g_win = True
-        r_win = True
-
-        for col in range(self.b_size):
-            for row in range(self.b_size):
-
-                if (self.board[row][col].tile == Tile.T_RED and
-                    self.board[row][col].piece != Tile.P_GREEN):
-                    g_win = False
-
-                if (self.board[row][col].tile == Tile.T_GREEN and
-                    self.board[row][col].piece != Tile.P_RED):
-                    r_win = False
-
-                if g_win is False and r_win is False:
-                    break
-
-        return Tile.P_GREEN if g_win else Tile.P_RED if r_win else None
+        if all(g.piece == Tile.P_GREEN for g in self.r_goals):
+            return Tile.P_GREEN
+        elif all(g.piece == Tile.P_RED for g in self.g_goals):
+            return Tile.P_RED
+        else:
+            return None
 
     def outline_tiles(self, tiles=[], outline_type=Tile.O_SELECT):
 
@@ -333,7 +318,7 @@ class Halma():
         for tile in tiles:
             tile.outline = outline_type
 
-    def utility_distance(self, board, player):
+    def utility_distance(self, player):
 
         def point_distance(p0, p1):
             return math.sqrt((p1[0] - p0[0])**2 + (p1[1] - p0[1])**2)
@@ -343,7 +328,7 @@ class Halma():
         for col in range(self.b_size):
             for row in range(self.b_size):
 
-                tile = board[row][col]
+                tile = self.board[row][col]
 
                 if tile.piece == Tile.P_GREEN:
                     distances = [point_distance(tile.loc, g.loc) for g in

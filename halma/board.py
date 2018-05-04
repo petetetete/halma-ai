@@ -1,9 +1,6 @@
 # Python Standard Library imports
 import tkinter as tk
 
-# Custom module imports
-from .tile import Tile
-
 
 class Board(tk.Tk):
 
