@@ -10,7 +10,7 @@ from .tile import Tile
 
 class Halma():
 
-    def __init__(self, b_size=8, c_player=Tile.P_RED):
+    def __init__(self, b_size=8, t_limit=60, c_player=Tile.P_RED):
 
         # Create initial board
         board = [[None] * b_size for _ in range(b_size)]
@@ -28,6 +28,7 @@ class Halma():
 
         # Save member variables
         self.b_size = b_size
+        self.t_limit = t_limit
         self.c_player = c_player
         self.board_view = Board(board)
         self.board = board
@@ -111,12 +112,12 @@ class Halma():
         else:
             self.board_view.set_status("Invalid move attempted")
 
-    def minimax(self, depth, player_to_max, a=float("-inf"),
-                b=float("inf"), maxing=True):
+    def minimax(self, depth, player_to_max, max_time, a=float("-inf"),
+                b=float("inf"), maxing=True, prunes=0, boards=0):
 
         # Bottomed out base case
-        if depth == 0 or self.find_winner():
-            return self.utility_distance(player_to_max), None
+        if depth == 0 or self.find_winner() or time.time() > max_time:
+            return self.utility_distance(player_to_max), None, prunes, boards
 
         # Setup initial variables and find moves
         best_move = None
@@ -132,13 +133,19 @@ class Halma():
         for move in moves:
             for to in move["to"]:
 
+                if time.time() > max_time:
+                    return best_val, best_move, prunes, boards
+
                 # Move piece to the move outlined
                 piece = move["from"].piece
                 move["from"].piece = Tile.P_NONE
                 to.piece = piece
+                boards += 1
 
-                val, _ = self.minimax(depth - 1, player_to_max,
-                    a, b, not maxing)
+                val, _, new_prunes, new_boards = self.minimax(depth - 1,
+                    player_to_max, max_time, a, b, not maxing, prunes, boards)
+                prunes = new_prunes
+                boards = new_boards
 
                 # Move the piece back
                 to.piece = Tile.P_NONE
@@ -155,30 +162,34 @@ class Halma():
                     b = min(b, val)
 
                 if self.ab_enabled and b <= a:
-                    return best_val, best_move
+                    return best_val, best_move, prunes + 1, boards
 
-        return best_val, best_move
+        return best_val, best_move, prunes, boards
 
     def execute_computer_move(self):
 
         # Print out search information
         print("Turn Computation")
         print("================")
-        print("Executing search...", end=" ")
+        print("Executing search ...", end=" ")
         sys.stdout.flush()
 
         self.computing = True
         self.board_view.set_status("Computing next move...")
         self.board_view.update()
+        max_time = time.time() + self.t_limit
 
         # Execute minimax search
         start = time.time()
-        _, move = self.minimax(self.ply_depth, self.c_player)
+        _, move, prunes, boards = self.minimax(self.ply_depth,
+            self.c_player, max_time)
         end = time.time()
 
         # Print search result stats
         print("complete")
         print("Time to compute:", round(end - start, 2))
+        print("Total boards generated:", boards)
+        print("Total prune events:", prunes)
 
         # Move the resulting piece
         self.outline_tiles(None)  # Reset outlines

@@ -49,4 +49,4 @@ if __name__ == "__main__":
                   ", ".join(RED_OPTIONS + GREEN_OPTIONS) + "]")
             sys.exit(-1)
 
-    halma = Halma(b_size, c_player)
+    halma = Halma(b_size, t_limit, c_player)
