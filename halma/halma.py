@@ -54,9 +54,10 @@ class Halma():
         # Print initial program info
         print("Halma Solver Basic Information")
         print("==============================")
-        print("Computer enabled:", "no" if self.c_player is None else "yes")
-        print("Ply depth:", self.ply_depth)
+        print("AI opponent enabled:", "no" if self.c_player is None else "yes")
         print("A-B pruning enabled:", "yes" if self.ab_enabled else "no")
+        print("Turn time limit:", self.t_limit)
+        print("Max ply depth:", self.ply_depth)
         print()
 
         self.board_view.mainloop()  # Begin tkinter main loop
