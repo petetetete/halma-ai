@@ -36,6 +36,7 @@ class Halma():
         self.selected_tile = None
         self.valid_moves = []
         self.computing = False
+        self.total_plies = 0
 
         self.ply_depth = 3
         self.ab_enabled = True
@@ -44,6 +45,9 @@ class Halma():
                         for t in row if t.tile == Tile.T_RED]
         self.g_goals = [t for row in board
                         for t in row if t.tile == Tile.T_GREEN]
+
+        self.board_view.set_status_color("#E50000" if
+            self.current_player == Tile.P_RED else "#007F00")
 
         if self.c_player == self.current_player:
             self.execute_computer_move()
@@ -134,6 +138,7 @@ class Halma():
         for move in moves:
             for to in move["to"]:
 
+                # Bail out when we're out of time
                 if time.time() > max_time:
                     return best_val, best_move, prunes, boards
 
@@ -143,6 +148,7 @@ class Halma():
                 to.piece = piece
                 boards += 1
 
+                # Recursively call self
                 val, _, new_prunes, new_boards = self.minimax(depth - 1,
                     player_to_max, max_time, a, b, not maxing, prunes, boards)
                 prunes = new_prunes
@@ -170,13 +176,14 @@ class Halma():
     def execute_computer_move(self):
 
         # Print out search information
-        print("Turn Computation")
-        print("================")
+        current_turn = (self.total_plies // 2) + 1
+        print("Turn", current_turn, "Computation")
+        print("=================" + ("=" * len(str(current_turn))))
         print("Executing search ...", end=" ")
         sys.stdout.flush()
 
+        # self.board_view.set_status("Computing next move...")
         self.computing = True
-        self.board_view.set_status("Computing next move...")
         self.board_view.update()
         max_time = time.time() + self.t_limit
 
@@ -188,7 +195,7 @@ class Halma():
 
         # Print search result stats
         print("complete")
-        print("Time to compute:", round(end - start, 2))
+        print("Time to compute:", round(end - start, 4))
         print("Total boards generated:", boards)
         print("Total prune events:", prunes)
 
@@ -205,6 +212,7 @@ class Halma():
             self.board_view.set_status("The " + ("green"
                 if winner == Tile.P_GREEN else "red") + " player has won!")
             self.current_player = None
+            print("Total # of plies:", self.total_plies)
 
         else:  # Toggle the current player
             self.current_player = (Tile.P_RED
@@ -229,7 +237,7 @@ class Halma():
                     "from": curr_tile,
                     "to": self.get_moves_at_tile(curr_tile, player)
                 }
-                moves += [move]
+                moves.append(move)
 
         return moves
 
@@ -243,8 +251,8 @@ class Halma():
 
         # List of valid tile types to move to
         valid_tiles = [Tile.T_NONE, Tile.T_GREEN, Tile.T_RED]
-        if tile.tile != player:  # Moving back into your own goal
-            valid_tiles.remove(player)
+        if tile.tile != player:
+            valid_tiles.remove(player)  # Moving back into your own goal
         if tile.tile != Tile.T_NONE and tile.tile != player:
             valid_tiles.remove(Tile.T_NONE)  # Moving out of the enemy's goal
 
@@ -270,7 +278,7 @@ class Halma():
 
                 if new_tile.piece == Tile.P_NONE:
                     if adj:  # Don't consider adjacent on subsequent calls
-                        moves += [new_tile]
+                        moves.append(new_tile)
                     continue
 
                 # Check jump tiles
@@ -289,7 +297,7 @@ class Halma():
                     continue
 
                 if new_tile.piece == Tile.P_NONE:
-                    moves += [new_tile]
+                    moves.insert(0, new_tile)  # Prioritize jumps
                     self.get_moves_at_tile(new_tile, player, moves, False)
 
         return moves
@@ -309,8 +317,13 @@ class Halma():
         to_tile.outline = Tile.O_MOVED
         from_tile.outline = Tile.O_MOVED
 
+        self.total_plies += 1
+
+        self.board_view.set_status_color("#007F00" if
+            self.current_player == Tile.P_RED else "#E50000")
         self.board_view.set_status("Piece moved from `" + str(from_tile) +
-            "` to `" + str(to_tile) + "`")
+            "` to `" + str(to_tile) + "`, " + ("green's" if
+            self.current_player == Tile.P_RED else "red's") + " turn...")
 
     def find_winner(self):
 

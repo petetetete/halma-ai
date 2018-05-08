@@ -50,7 +50,7 @@ class Board(tk.Tk):
 
         # Create status label
         self.status = tk.Label(self, anchor="c", font=(None, 16),
-            bg="#EF4235", fg="#fff", text="Status Messages")
+            bg="#212121", fg="#fff", text="Green player's turn")
         self.status.grid(row=self.b_size + 3, column=0,
             columnspan=self.b_size + 3, sticky="ewns")
 
@@ -69,6 +69,9 @@ class Board(tk.Tk):
 
     def set_status(self, text):
         self.status.configure(text=text)
+
+    def set_status_color(self, color):
+        self.status.configure(bg=color)
 
     def draw_tiles(self, event=None, board=None):
 
@@ -125,10 +128,10 @@ class Board(tk.Tk):
 
                 if self.board[row][col].piece == 2:
                     piece = self.canvas.create_oval(x1, y1, x2, y2,
-                        tags="piece", width=0, fill="red")
+                        tags="piece", width=0, fill="#E50000")
                 elif self.board[row][col].piece == 1:
                     piece = self.canvas.create_oval(x1, y1, x2, y2,
-                        tags="piece", width=0, fill="green")
+                        tags="piece", width=0, fill="#007F00")
                 else:
                     continue
 
