@@ -75,10 +75,10 @@ class Halma():
             self.outline_tiles(None)  # Reset outlines
 
             # Outline the new and valid move tiles
-            new_tile.outline = Tile.O_SELECT
+            new_tile.outline = Tile.O_MOVED
             self.valid_moves = self.get_moves_at_tile(new_tile,
                 self.current_player)
-            self.outline_tiles([new_tile] + self.valid_moves)
+            self.outline_tiles(self.valid_moves)
 
             # Update status and save the new tile
             self.board_view.set_status("Tile `" + str(new_tile) + "` selected")

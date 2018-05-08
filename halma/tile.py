@@ -54,7 +54,7 @@ class Tile():
         outline_colors = [
             tile_color,
             "yellow",  # TODO: Change
-            "lightblue"
+            "#1100BB"
         ]
         outline_color = outline_colors[self.outline]
 
