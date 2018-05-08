@@ -211,7 +211,15 @@ class Halma():
         if winner:
             self.board_view.set_status("The " + ("green"
                 if winner == Tile.P_GREEN else "red") + " player has won!")
+            self.board_view.set_status_color("#212121")
             self.current_player = None
+            self.current_player = None
+
+            print()
+            print("Final Stats")
+            print("===========")
+            print("Final winner:", "green"
+                if winner == Tile.P_GREEN else "red")
             print("Total # of plies:", self.total_plies)
 
         else:  # Toggle the current player
