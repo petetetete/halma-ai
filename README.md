@@ -9,9 +9,11 @@ player games.
 
 ## Game Images
 
-<img src="images/start.png" width="350" />
-<img src="images/past_move_highlighting.png" width="350" />
-<img src="images/possible_move_highlighting.png" width="350" />
+<p float="left">
+    <img src="images/start.png" width="250" />
+    <img src="images/past_move_highlighting.png" width="250" />
+    <img src="images/possible_move_highlighting.png" width="250" />
+</p>
 
 
 ## Class Tournament
