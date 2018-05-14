@@ -10,9 +10,9 @@ player games.
 ## Game Images
 
 <p float="left">
-    <img src="images/start.png" width="250" />
-    <img src="images/past_move_highlighting.png" width="250" />
-    <img src="images/possible_move_highlighting.png" width="250" />
+    <img src="images/start.png" width="290" />
+    <img src="images/past_move_highlighting.png" width="290" />
+    <img src="images/possible_move_highlighting.png" width="290" />
 </p>
 
 
