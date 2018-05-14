@@ -9,7 +9,9 @@ player games.
 
 ## Game Images
 
-![Initial Board State](images/start.png)
+<img src="images/start.png" width="350" />
+<img src="images/past_move_highlighting.png" width="350" />
+<img src="images/possible_move_highlighting.png" width="350" />
 
 
 ## Class Tournament
